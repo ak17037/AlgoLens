@@ -1,611 +1,163 @@
-AlgoLens
+# AlgoLens — Unified Competitive Programming Analytics Dashboard
+
+**College Mini-Project | Frontend Development with React JS**
+
+> "You solve on LeetCode, grind Codeforces, climb CodeChef stars. AlgoLens unifies it all into one clear picture — what's improving, what's stalling, what to do next."
+
+---
+
+## 1. Introduction
+
+AlgoLens is a **single-page React application (SPA)** that acts as a **unified analytics dashboard for competitive programmers**. DSA practice is usually scattered across 3–4 platforms (LeetCode, Codeforces, CodeChef, GeeksforGeeks) with no single place to see the combined picture.
+
+AlgoLens simulates a real analytics product: it takes structured profile data (mock data standing in for what a live API would return) and renders it as an interactive dashboard — topic-wise mastery, cross-platform rating conversion, goal tracking, and interview-readiness scoring.
+
+Built to demonstrate: component-based architecture, state management, custom SVG data-visualization, and clean UI/UX — with **no charting library and no backend**.
+
+## 2. Problem Statement
+
+A student cannot easily answer:
+- Am I actually improving, or just solving more Easy problems?
+- Which topic (Graphs, DP, Trees) is my weak point?
+- If my CodeChef rating is 1620, what's that on Codeforces?
+- Am I interview-ready for FAANG vs. a startup?
+
+AlgoLens answers all of this in one dashboard, using only frontend logic (MVP/prototype layer — no backend yet).
+
+## 3. Tech Stack
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| UI Library | React 19 (Functional Components + Hooks) | Component tree & reactive rendering |
+| Build Tool | Vite 8 | Dev server & production bundling |
+| Icons | lucide-react | SVG icon set |
+| Styling | Plain CSS + CSS variable design tokens | Theming (`--primary`, `--paper`, `--ink`) |
+| Linting | oxlint | Fast JS/JSX linting |
+| Charts | Hand-built SVG + trigonometry | Custom animated Radar Chart (no library) |
+| Language | JavaScript ES6+, JSX | Application logic |
+
+All data is local and in-memory (`src/data/mockData.js`) — fully client-side, easy to run/demo.
+
+## 4. Project Structure (Blueprint)
+
+```
+AlgoLens/
+├── index.html, vite.config.js, package.json
+├── src/
+│   ├── main.jsx           # ReactDOM root render
+│   ├── App.jsx             # ROOT — routing, layout, keyboard nav
+│   ├── components/
+│   │   ├── Sidebar.jsx         # Nav + profile switcher
+│   │   ├── TopHeader.jsx       # Top bar
+│   │   ├── Footer.jsx          # Footer + scroll-to-top
+│   │   ├── RadarChart.jsx      # Custom animated SVG skill chart
+│   │   ├── PageDots.jsx / PagePagination.jsx
+│   ├── pages/
+│   │   ├── OverviewPage.jsx        # p1 — Hero + Radar map
+│   │   ├── GoalsReadinessPage.jsx  # p4 — Goal tracker + readiness
+│   │   ├── DashboardPage.jsx       # p5 — KPI dashboard + gaps
+│   │   └── TechStackPage.jsx       # p6 — Tech stack explainer
+│   └── data/
+│       ├── mockData.js     # PROFILES, PLATFORM_SPECS, RADAR_PRESETS
+│       └── conversionMap.js # Cross-platform rating formulas
+└── public/ (favicon.svg, icons.svg)
+```
+
+> `App.jsx` also routes to `ProblemPage.jsx` (p2) and `AnalyticsPage.jsx` (p3) — part of the planned 6-page structure, not yet present in this build (see Future Scope).
+
+## 5. System Architecture / Application Flow
+
+Single root-state, multi-page SPA — no `react-router`; navigation is state-driven like a slide deck.
+
+```
+main.jsx → mounts <App/>
+      │
+      ▼
+   App.jsx (ROOT STATE OWNER)
+   state: activePageId, activeProfile, sidebarCollapsed, pageTransitioning
+      │
+      ├──► Sidebar (nav + profile switch)
+      ├──► TopHeader
+      └──► <main> renders active page via switch(activePageId)
+                │
+       p1 Overview → p2 Problem → p3 Analytics → p4 Goals → p5 Dashboard → p6 TechStack
+```
+
+**Data flow (props down, events up):**
+```
+mockData.js (PROFILES, source of truth)
+      → App.jsx useState(activeProfile)
+      → passed as prop to every page
+      → page reads profile.xyz and renders UI
+      → user interacts (slider / button / profile switch)
+      → callback prop fires (onNavigate / onSelectProfile / onChange)
+      → App.jsx setState updates → React re-renders
+```
+
+**Runtime flow:**
+1. `main.jsx` renders `<App/>` inside `StrictMode`.
+2. `App.jsx` defaults `activePageId='p1'`, `activeProfile=PROFILES[0]`.
+3. Sidebar, TopHeader, active page, Footer render together; a top bar shows page progress %.
+4. Clicking Sidebar items, number keys `1–6`, or arrow keys call `handleNavigate()`, updating `activePageId` with a short fade transition.
+5. `renderCurrentPage()` switches on `activePageId` to mount the right page.
+6. Switching profile (Sidebar dropdown / Dashboard buttons) updates `activeProfile` — every page re-renders instantly with the new user's stats.
+7. Pages keep their own local `useState` for things that stay local: radar sliders, topic filters, goal target, readiness tab.
 
-Competitive Programming Analytics and Visualization Platform
+## 6. Core Modules Explained
 
-AlgoLens is a React-based web application designed to help students understand their competitive programming progress. Students often use platforms such as LeetCode, Codeforces, CodeChef, and GeeksforGeeks, but each platform provides different statistics.
+**`App.jsx`** — lightweight router + state container; owns 4 state values, exposes `handleNavigate`/`handleScrollTop`; adds keyboard navigation.
 
-The main idea of AlgoLens is to bring important coding statistics into one dashboard and present them using simple charts, progress indicators, goals, and topic analysis.
+**`RadarChart.jsx`** — the most technical piece. Built from raw SVG + trigonometry (no chart library): converts each skill score (0–1) to `(x,y)` via `angle = -90 + i*(360/n)` with `cos()/sin()`; draws concentric grids at 25/50/75/100%; animates shape morphing with `requestAnimationFrame` + cubic ease-out; ships interactive sliders for live "what-if" tuning.
 
-Note: The current version is a frontend prototype and uses mock data. Real platform API integration and backend functionality are part of the future scope.
+**`mockData.js`** — plays the role of an API response: `PROFILES` (3 sample users with per-platform stats, topic mastery, readiness %, coach quotes), `PLATFORM_SPECS` (how each platform would be fetched live), `RADAR_PRESETS` (demo skill profiles), `TECH_STACK` (syllabus content).
 
-1. Problem Statement
+**`conversionMap.js`** — linear formulas that estimate one platform's rating on another, e.g. `cfRating = max(800, (lcRating-1200)*0.85 + 900)`. Also classifies a rating into a `DIFFICULTY_TIERS` bucket (Beginner → Grandmaster). This is the app's "intelligence" layer.
 
-Students preparing for DSA and coding interviews usually practice on multiple platforms. It becomes difficult to answer questions like:
+**Page components** — each is a self-contained slide: receives `profile` + `onNavigate` as props, holds local UI state, renders an `editorial-panel`.
+- *OverviewPage* — hero + live radar skill map with presets.
+- *GoalsReadinessPage* — goal slider + FAANG/FinTech/Startup readiness tabs with progress bars.
+- *DashboardPage* — 4 KPI cards, topic breakdown with filters, coach's diagnostic note.
+- *TechStackPage* — documents the tech/syllabus layers (self-documenting page).
 
-How good am I overall?
+## 7. Design System
 
-Which DSA topics are weak?
+A custom "editorial/paper" language via CSS variable tokens (`--primary`, `--paper`, `--ink`, `--line`, `--radius-*`) so every component shares consistent spacing, color, and type — a small-scale version of production token systems (Material, Tailwind).
 
-Am I improving consistently?
+## 8. How to Run Locally
 
-How close am I to my target?
+```bash
+cd AlgoLens
+npm install
+npm run dev       # http://localhost:5173
+npm run build      # production build
+npm run preview    # preview the build
+```
 
-What should I practice more?
+## 9. Applications & Use Cases
 
-AlgoLens tries to solve this problem by providing a single visual dashboard for coding progress.
+- **Students** — one dashboard to track DSA prep before placements/interviews.
+- **Coding clubs/colleges** — extend into a batch leaderboard (multi-profile support already exists).
+- **Interview prep** — maps practice data directly to company-tier benchmarks.
+- **Portfolio project** — showcases component architecture, custom SVG charts, state lifting, design systems.
 
-2. Objectives
+## 10. Limitations
 
-The main objectives of AlgoLens are:
+- Data is fully mocked — no live platform API integration yet.
+- No backend/auth/database — manual edits (e.g. radar sliders) reset on refresh.
+- `ProblemPage` (p2) and `AnalyticsPage` (p3) are routed but not implemented.
+- Rating-conversion formulas are simplified linear approximations, not statistically validated.
 
-Combine coding performance information in one place.
+## 11. Future Scope
 
-Show problems solved and other important statistics.
+- Integrate real LeetCode/Codeforces/CodeChef/GFG APIs as hinted in `PLATFORM_SPECS`.
+- Add a backend (Node/Express + MongoDB) for real, persistent user accounts.
+- Build out `ProblemPage` and `AnalyticsPage` (trend graphs over time).
+- Replace linear conversion with a regression model trained on real data.
+- Add authentication for live, saved per-student profiles.
 
-Identify strong and weak DSA topics.
+## 12. Conclusion
 
-Track coding goals.
+AlgoLens shows how a purely frontend React app, with no backend, can simulate a fully functional analytics product through smart mock-data design, custom SVG visualization, and clean component architecture — reflecting core HTML/CSS, JavaScript ES6+, DOM, and React fundamentals in one complete showcase project.
 
-Show a basic interview-readiness concept.
-
-Present information using an easy-to-understand dashboard.
-
-Create a foundation for future real API integration.
-
-3. Main Idea
-
-The basic working of AlgoLens is:
-
-Coding Platform Data
-        ↓
-     Organize Data
-        ↓
-      Analytics
-        ↓
- Topic / Goal Analysis
-        ↓
-  Visual Dashboard
-        ↓
- Student Insights
-
-In the current project, the platform data is stored as JavaScript mock data.
-
-4. Technology Stack
-
-Technology
-
-Purpose
-
-React
-
-Building the user interface
-
-JavaScript
-
-Application logic and calculations
-
-CSS
-
-Styling and responsive design
-
-Vite
-
-Development and build tool
-
-Lucide React
-
-Icons
-
-SVG
-
-Radar chart visualization
-
-I selected React because the application contains many reusable components such as cards, navigation elements, charts, and dashboard sections.
-
-5. Project Structure
-
-The important source structure is:
-
-src/
-│
-├── components/
-│   ├── Footer.jsx
-│   ├── Navbar.jsx
-│   ├── RadarChart.jsx
-│   ├── Sidebar.jsx
-│   └── TopHeader.jsx
-│
-├── data/
-│   ├── conversionMap.js
-│   └── mockData.js
-│
-├── pages/
-│   ├── DashboardPage.jsx
-│   ├── GoalsReadinessPage.jsx
-│   ├── OverviewPage.jsx
-│   └── TechStackPage.jsx
-│
-├── App.jsx
-├── App.css
-├── index.css
-└── main.jsx
-
-Important files
-
-App.jsx
-Acts as the main controller of the application. It manages page navigation, selected profile, sidebar state, and page transitions.
-
-mockData.js
-Contains sample student profiles, platform statistics, topic scores, goals, and readiness data.
-
-conversionMap.js
-Contains basic rating conversion/normalization logic for comparing different platforms.
-
-RadarChart.jsx
-Creates the interactive DSA skill radar chart using SVG.
-
-6. Application Flow
-
-The application starts from main.jsx.
-
-index.html
-    ↓
-main.jsx
-    ↓
-App.jsx
-    ↓
-Selected Page
-    ↓
-Page Components
-    ↓
-Data from mockData.js
-    ↓
-Charts / Cards / Progress
-
-The user can move between different sections using the sidebar.
-
-The intended sections include:
-
-Overview
-Current Progress
-Analytics
-Goals & Readiness
-Dashboard
-Tech Stack
-
-7. Profile System
-
-The project contains sample profiles such as:
-
-Arjun Kumar
-Priya Sharma
-Alex Chen
-
-Each profile contains information such as:
-
-Name
-Handle
-Problems solved
-Rating
-Streak
-Consistency
-Goal progress
-Platform statistics
-Topic mastery
-Interview readiness
-
-The selected profile is stored in React state. When the profile changes, the dashboard updates automatically.
-
-8. Platform Data
-
-AlgoLens currently represents four platforms:
-
-LeetCode
-
-Solved
-Easy / Medium / Hard
-Contest Rating
-Global Rank
-Streak
-
-Codeforces
-
-Rating
-Rank
-Maximum Rating
-Contests
-Solved Problems
-
-CodeChef
-
-Stars
-Rating
-Global Rank
-Solved Problems
-
-GeeksforGeeks
-
-Score
-Problems Solved
-Institute Rank
-
-At present these values are mock data rather than live platform data.
-
-9. Data Normalization
-
-Different coding platforms use different rating systems. Therefore, directly comparing their ratings is not always accurate.
-
-AlgoLens contains conversionMap.js to demonstrate basic normalization.
-
-The concept is:
-
-Platform Rating
-      ↓
-Conversion Formula
-      ↓
-Estimated Common Level
-
-The current formulas are only a basic prototype. A real system would require more data and statistical analysis.
-
-10. Dashboard
-
-The dashboard is the main analytics section.
-
-It shows important metrics such as:
-
-Problems Solved
-Consistency
-Rating
-Goal Progress
-
-It also shows topic-wise performance and weak areas.
-
-The purpose is to give the student a quick answer to:
-
-"How am I performing right now?"
-
-11. Topic Mastery
-
-Each DSA topic contains information such as:
-
-Topic Name
-Score
-Problems Solved
-Attempts
-Accuracy
-Status
-
-For example:
-
-Arrays   → 94%
-Strings  → 88%
-Trees    → 45%
-Graphs   → 40%
-DP       → 30%
-
-The current project uses simple rules:
-
-85% or above → Mastered
-Below 60%    → Needs Focus
-Otherwise    → Developing
-
-This makes it easy for a student to identify weak areas.
-
-12. Radar Chart
-
-The radar chart is used to visually represent DSA skills.
-
-The chart contains topics such as:
-
-Arrays
-Strings
-Trees
-Graphs
-Dynamic Programming
-
-The chart is created manually using SVG.
-
-For each topic, the application calculates its position using basic trigonometry:
-
-X = centerX + radius × cos(angle)
-Y = centerY + radius × sin(angle)
-
-The points are then connected to create the radar shape.
-
-This helped me understand how mathematical calculations can be used to create interactive visualizations.
-
-13. Radar Animation
-
-The radar chart uses requestAnimationFrame() to animate changes.
-
-The flow is:
-
-User changes value
-       ↓
-React state updates
-       ↓
-New radar values
-       ↓
-Animation starts
-       ↓
-Chart gradually changes
-
-This gives a smoother user experience.
-
-The chart also contains sliders, so users can change skill values interactively.
-
-14. Goals and Readiness
-
-The Goals & Readiness section allows the student to set a target number of problems.
-
-For example:
-
-Current Solved = 350
-Target = 500
-
-Progress is calculated as:
-
-350 / 500 × 100 = 70%
-
-The project also shows how many problems remain.
-
-The readiness section contains sample benchmarks such as:
-
-FAANG / Tier-1
-FinTech / Quant
-Startups
-
-These are currently predefined values used to demonstrate the concept.
-
-15. React State Management
-
-I used React's built-in:
-
-useState()
-useEffect()
-
-instead of an external state-management library.
-
-State is used for things such as:
-
-Current page
-Selected profile
-Sidebar state
-Radar values
-Goal values
-
-The general React data flow is:
-
-Parent Component
-      ↓
-Child Component
-      ↓
-User Interaction
-      ↓
-Callback
-      ↓
-Parent State Update
-      ↓
-UI Re-render
-
-16. Responsive Design
-
-CSS media queries are used to make the dashboard responsive.
-
-On smaller screens:
-
-Large grids
-    ↓
-Smaller grids
-    ↓
-Single-column layout
-
-This allows the application to work on both desktop and smaller screens.
-
-17. Future Scope
-
-The current project is a frontend prototype. In the future, I would add:
-
-Real Platform APIs
-
-Connect:
-
-LeetCode
-Codeforces
-CodeChef
-GeeksforGeeks
-
-and fetch actual user statistics.
-
-Backend and Database
-
-A backend could store:
-
-Users
-Platform Accounts
-Problems
-Submissions
-Goals
-Historical Analytics
-
-Automatic Analytics
-
-Instead of mock scores, the system could calculate topic mastery using:
-
-Accuracy
-Problems Solved
-Difficulty
-Recent Performance
-Consistency
-
-Recommendation System
-
-The application could automatically suggest what to practice next.
-
-For example:
-
-Weakest Topic → Dynamic Programming
-
-Recommendation:
-Practice 10 DP problems
-
-18. Applications
-
-AlgoLens can be useful for:
-
-Students
-
-Track DSA and coding preparation.
-
-Interview Preparation
-
-Compare current skills with a target level.
-
-Competitive Programmers
-
-Understand topic strengths and weaknesses.
-
-Teachers
-
-A future multi-user version could help teachers monitor student progress.
-
-College Placement Training
-
-Colleges could use the system to track students' coding preparation.
-
-19. Advantages
-
-Simple and student-friendly dashboard.
-
-Multiple coding-platform concepts in one place.
-
-Visual representation of DSA skills.
-
-Goal tracking.
-
-Weak-topic identification.
-
-Interactive radar chart.
-
-Easy to extend with real data later.
-
-Good demonstration of React component-based development.
-
-20. Limitations
-
-The current version has some limitations:
-
-It uses mock data.
-
-There is no backend.
-
-There is no database.
-
-There is no real platform API integration.
-
-Authentication is not implemented.
-
-Readiness scores are predefined.
-
-Rating conversion is only a basic approximation.
-
-Data is not permanently stored.
-
-These limitations are acceptable for the current college-project prototype but would need to be addressed in a production version.
-
-21. Current Architecture
-
-              React Application
-                     |
-              ┌──────┴──────┐
-              |             |
-            Pages       Components
-              |             |
-              └──────┬──────┘
-                     |
-                  Mock Data
-                     |
-              ┌──────┴──────┐
-              |             |
-          Analytics     Visualization
-              |             |
-              └──────┬──────┘
-                     |
-                 Dashboard
-
-22. Future Architecture
-
-The future version could work like:
-
-Coding Platforms
-       ↓
-     APIs
-       ↓
-    Backend
-       ↓
-    Database
-       ↓
- Data Normalization
-       ↓
-    Analytics
-       ↓
-Recommendations
-       ↓
- React Dashboard
-
-This would turn the current prototype into a complete analytics platform.
-
-23. Important Project Issue
-
-While reviewing the project, I found that App.jsx references:
-
-ProblemPage
-AnalyticsPage
-
-but these files are not present in the supplied project.
-
-Therefore, these references should be fixed before final submission if the project needs to build successfully.
-
-There are also some older navigation components that are not part of the current main navigation and can be cleaned up.
-
-24. Learning Outcomes
-
-Through this project, I learned and practiced:
-
-React components
-
-React state
-
-Props and callbacks
-
-JavaScript
-
-CSS
-
-Responsive design
-
-SVG visualization
-
-Basic data analysis
-
-Data organization
-
-User interaction
-
-Building a dashboard-style application
-
-The project also helped me understand that a good application needs both a clear user interface and a proper data structure behind it.
-
-25. Conclusion
-
-AlgoLens is a web-based competitive programming analytics project created to help students understand their coding progress.
-
-Instead of only showing the number of solved problems, the project tries to provide more useful information such as:
-
-Overall Progress
-      +
-Topic Strength
-      +
-Weak Areas
-      +
-Goals
-      +
-Readiness
-
-The current version demonstrates the frontend and analytics concept using mock data.
-
-In the future, real coding-platform APIs, a backend, database, automatic analytics, and a recommendation system can be added.
-
-The main idea of AlgoLens is:
-
-Coding Data → Analysis → Understanding → Better Preparation
+---
+*Project by ak17037 · Built with React + Vite*
