@@ -3,21 +3,22 @@ import Sidebar, { SIDEBAR_ITEMS } from './components/Sidebar';
 import TopHeader from './components/TopHeader';
 import Footer from './components/Footer';
 
-// 6 Streamlined Core Pages
 import OverviewPage from './pages/OverviewPage';
-import ProblemPage from './pages/ProblemPage';
-import AnalyticsPage from './pages/AnalyticsPage';
-import GoalsReadinessPage from './pages/GoalsReadinessPage';
-import DashboardPage from './pages/DashboardPage';
-import TechStackPage from './pages/TechStackPage';
+import ComingSoonPage from './pages/ComingSoonPage';
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
 
 import { PROFILES } from './data/mockData';
+import { isLoggedIn, logoutUser } from './data/authUtils';
 
 export default function App() {
   const [activePageId, setActivePageId] = useState('p1');
   const [activeProfile, setActiveProfile] = useState(PROFILES[0]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [pageTransitioning, setPageTransitioning] = useState(false);
+  const [showLanding, setShowLanding] = useState(true);
+  const [showLogin, setShowLogin] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(isLoggedIn());
 
   const handleNavigate = (pageId) => {
     if (pageId === activePageId) return;
@@ -62,26 +63,54 @@ export default function App() {
 
   // Render current active page
   const renderCurrentPage = () => {
-    switch (activePageId) {
-      case 'p1':
-        return <OverviewPage profile={activeProfile} onNavigate={handleNavigate} />;
-      case 'p2':
-        return <ProblemPage onNavigate={handleNavigate} />;
-      case 'p3':
-        return <AnalyticsPage profile={activeProfile} onNavigate={handleNavigate} />;
-      case 'p4':
-        return <GoalsReadinessPage profile={activeProfile} onNavigate={handleNavigate} />;
-      case 'p5':
-        return <DashboardPage profile={activeProfile} onSelectProfile={setActiveProfile} onNavigate={handleNavigate} />;
-      case 'p6':
-        return <TechStackPage onScrollTop={handleScrollTop} onNavigate={handleNavigate} />;
-      default:
-        return <OverviewPage profile={activeProfile} onNavigate={handleNavigate} />;
+    // Only Overview is live; all other pages show "Coming Soon"
+    if (activePageId === 'p1') {
+      return <OverviewPage profile={activeProfile} onNavigate={handleNavigate} />;
     }
+
+    // Find the sidebar item to get its label & number for the placeholder
+    const item = SIDEBAR_ITEMS.find((p) => p.id === activePageId);
+    return (
+      <ComingSoonPage
+        pageLabel={item?.label || 'Page'}
+        pageNum={item?.num || '00'}
+        onNavigate={handleNavigate}
+      />
+    );
   };
 
   const currentIndex = SIDEBAR_ITEMS.findIndex((p) => p.id === activePageId);
   const progressPercent = ((currentIndex + 1) / SIDEBAR_ITEMS.length) * 100;
+
+  /* ── Routing Logic ── */
+
+  const handleEnterDashboard = () => {
+    setShowLanding(false);
+    if (isAuthenticated) {
+      setShowLogin(false);
+    } else {
+      setShowLogin(true);
+    }
+  };
+
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+    setShowLogin(false);
+  };
+
+  const handleLogout = () => {
+    logoutUser();
+    setIsAuthenticated(false);
+    setShowLanding(true);
+  };
+
+  if (showLanding) {
+    return <LandingPage onEnterDashboard={handleEnterDashboard} />;
+  }
+
+  if (showLogin) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--paper)' }}>
@@ -111,10 +140,9 @@ export default function App() {
       <Sidebar
         activePageId={activePageId}
         onNavigate={handleNavigate}
-        activeProfile={activeProfile}
-        onSelectProfile={setActiveProfile}
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onLogout={handleLogout}
       />
 
       {/* Main Content View Stage */}
