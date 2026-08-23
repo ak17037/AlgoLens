@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   LayoutDashboard,
   Compass,
@@ -6,10 +6,8 @@ import {
   BarChart3,
   Target,
   Layers,
-  Check,
-  ChevronDown
+  LogOut
 } from 'lucide-react';
-import { PROFILES } from '../data/mockData';
 
 export const SIDEBAR_ITEMS = [
   { id: 'p1', num: '01', label: 'Overview', icon: Compass },
@@ -23,12 +21,10 @@ export const SIDEBAR_ITEMS = [
 export default function Sidebar({
   activePageId,
   onNavigate,
-  activeProfile,
-  onSelectProfile,
   collapsed,
-  onToggleCollapse
+  onToggleCollapse,
+  onLogout
 }) {
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   return (
     <aside
@@ -97,107 +93,6 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* User Switcher Pill */}
-      <div style={{ padding: collapsed ? '12px 6px' : '14px 14px', borderBottom: '1px solid var(--line)' }}>
-        <div style={{ position: 'relative' }}>
-          <button
-            onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: collapsed ? 'center' : 'space-between',
-              background: 'var(--paper-2)',
-              border: '1px solid var(--line)',
-              borderRadius: '10px',
-              padding: collapsed ? '8px 4px' : '7px 10px',
-              cursor: 'pointer',
-              transition: 'background 0.15s ease'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span
-                style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  background: 'var(--primary)',
-                  color: '#fff',
-                  fontSize: '0.68rem',
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                {activeProfile.avatar}
-              </span>
-              {!collapsed && (
-                <div style={{ textAlign: 'left', lineHeight: 1.15 }}>
-                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink)' }}>
-                    {activeProfile.name}
-                  </div>
-                  <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--ink-dim)' }}>
-                    @{activeProfile.handle}
-                  </div>
-                </div>
-              )}
-            </div>
-            {!collapsed && <ChevronDown size={12} color="var(--ink-dim)" />}
-          </button>
-
-          {/* Profile Dropdown */}
-          {profileDropdownOpen && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '110%',
-                left: 0,
-                width: '220px',
-                background: 'var(--panel)',
-                border: '1px solid var(--line)',
-                borderRadius: '12px',
-                boxShadow: '0 12px 30px rgba(15, 23, 42, 0.12)',
-                padding: '8px',
-                zIndex: 250
-              }}
-            >
-              <div className="mono" style={{ fontSize: '0.65rem', color: 'var(--ink-dim)', padding: '6px 8px', textTransform: 'uppercase' }}>
-                Select Active Profile
-              </div>
-              {PROFILES.map((p) => (
-                <div
-                  key={p.id}
-                  onClick={() => {
-                    onSelectProfile(p);
-                    setProfileDropdownOpen(false);
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '8px 10px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    background: activeProfile.id === p.id ? 'var(--primary-light)' : 'transparent',
-                    transition: 'background 0.15s ease'
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: activeProfile.id === p.id ? 'var(--primary)' : 'var(--ink)' }}>
-                      {p.name}
-                    </div>
-                    <div className="mono" style={{ fontSize: '0.68rem', color: 'var(--ink-dim)' }}>
-                      @{p.handle} · {p.overallSolved} solved
-                    </div>
-                  </div>
-                  {activeProfile.id === p.id && <Check size={14} color="var(--primary)" />}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
 
       {/* Navigation List */}
       <div style={{ flex: 1, overflowY: 'auto', padding: collapsed ? '12px 6px' : '14px 12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -249,17 +144,48 @@ export default function Sidebar({
           borderTop: '1px solid var(--line)',
           background: 'var(--paper-2)',
           display: 'flex',
+          flexDirection: 'column',
+          gap: '12px'
+        }}
+      >
+        <div style={{
+          display: 'flex',
           alignItems: 'center',
           justifyContent: collapsed ? 'center' : 'flex-start',
           gap: '8px'
-        }}
-      >
-        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981', flexShrink: 0 }} />
-        {!collapsed && (
-          <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--ink-dim)' }}>
-            4 Platforms Synced
-          </span>
-        )}
+        }}>
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981', flexShrink: 0 }} />
+          {!collapsed && (
+            <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--ink-dim)' }}>
+              4 Platforms Synced
+            </span>
+          )}
+        </div>
+        
+        <button
+          onClick={onLogout}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            gap: '8px',
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--ink-dim)',
+            cursor: 'pointer',
+            padding: '4px 0',
+            width: '100%',
+            transition: 'color 0.15s ease'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--danger)'}
+          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--ink-dim)'}
+          title={collapsed ? "Log out" : ""}
+        >
+          <LogOut size={16} />
+          {!collapsed && (
+            <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Log out</span>
+          )}
+        </button>
       </div>
     </aside>
   );
