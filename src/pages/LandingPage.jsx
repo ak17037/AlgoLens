@@ -631,7 +631,7 @@ export default function LandingPage({ onEnterDashboard }) {
                 border: '1px solid var(--line)'
               }}
             >
-              React Project · 2025
+              React Project · 2026
             </span>
           </div>
           <div
