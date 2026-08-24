@@ -109,7 +109,15 @@ export default function App() {
   }
 
   if (showLogin) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <LoginPage
+        onLoginSuccess={handleLoginSuccess}
+        onBackToHome={() => {
+          setShowLogin(false);
+          setShowLanding(true);
+        }}
+      />
+    );
   }
 
   return (

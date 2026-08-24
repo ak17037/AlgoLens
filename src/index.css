@@ -312,4 +312,19 @@ input[type="range"]::-webkit-slider-thumb:hover {
   section.page-section {
     padding: 28px 0 16px;
   }
+
+  .login-card-container {
+    flex-direction: column !important;
+    max-width: 520px !important;
+  }
+
+  .login-left-panel {
+    flex: 0 0 280px !important;
+    min-height: 280px !important;
+  }
+
+  .login-right-panel {
+    padding: 28px 24px !important;
+  }
 }
+
