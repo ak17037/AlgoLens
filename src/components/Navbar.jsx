@@ -11,14 +11,8 @@ import { PROFILES } from '../data/mockData';
 
 export const PAGES_NAV = [
   { id: 'p1', num: '01', label: 'Overview', title: '01 — Overview' },
-  { id: 'p2', num: '02', label: 'Disparity', title: '02 — The Problem' },
-  { id: 'p3', num: '03', label: 'Workflow', title: '03 — How It Works' },
-  { id: 'p4', num: '04', label: 'Data Ingest', title: '04 — Data Collection' },
-  { id: 'p5', num: '05', label: 'Analytics', title: '05 — Analytics Engine' },
-  { id: 'p6', num: '06', label: 'AI Coach', title: '06 — AI Recommendations' },
-  { id: 'p7', num: '07', label: 'Goals', title: '07 — Goals & Readiness' },
-  { id: 'p8', num: '08', label: 'Dashboard', title: '08 — Dashboard Preview' },
-  { id: 'p9', num: '09', label: 'Tech Stack', title: '09 — Tech Stack' }
+  { id: 'p2', num: '02', label: 'Current Progress', title: '02 — Current Progress' },
+  { id: 'p6', num: '03', label: 'Tech Stack', title: '03 — Tech Stack' }
 ];
 
 export default function Navbar({
@@ -191,7 +185,7 @@ export default function Navbar({
             </button>
 
             <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--ink)', fontWeight: 600, padding: '0 4px' }}>
-              {currentPage.num} <span style={{ color: 'var(--ink-dim)', fontWeight: 400 }}>/ 09</span>
+              {currentPage.num} <span style={{ color: 'var(--ink-dim)', fontWeight: 400 }}>/ 03</span>
             </span>
 
             <button
@@ -342,7 +336,7 @@ export default function Navbar({
           }}
         >
           <div className="mono" style={{ fontSize: '0.7rem', color: 'var(--gold-dark)', textTransform: 'uppercase', marginBottom: '4px' }}>
-            Jump to Page (01–09)
+            Jump to Page (01–03)
           </div>
           {PAGES_NAV.map((page) => (
             <button
