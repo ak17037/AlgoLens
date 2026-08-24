@@ -12,10 +12,7 @@ import {
 export const SIDEBAR_ITEMS = [
   { id: 'p1', num: '01', label: 'Overview', icon: Compass },
   { id: 'p2', num: '02', label: 'Current Progress', icon: ArrowLeftRight },
-  { id: 'p3', num: '03', label: 'Analytics Engine', icon: BarChart3 },
-  { id: 'p4', num: '04', label: 'Goals & Readiness', icon: Target },
-  { id: 'p5', num: '05', label: 'Live Dashboard', icon: LayoutDashboard },
-  { id: 'p6', num: '06', label: 'Tech Stack', icon: Layers }
+  { id: 'p6', num: '03', label: 'Tech Stack', icon: Layers }
 ];
 
 export default function Sidebar({
